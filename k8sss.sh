@@ -127,3 +127,31 @@ kubectl port-forward --address 0.0.0.0 svc/{your service name} {external port to
 for example, if my service is named badstore and is listening on 80
 
 kubectl port-forward --address 0.0.0.0 svc/badstore 8888:80
+
+
+
+
+
+
+------------------install minikube-------------------------
+# Steps:-
+
+# For Docker Installation
+sudo apt-get update
+sudo apt-get install docker.io -y
+sudo usermod -aG docker $USER && newgrp docker
+
+# For Minikube & Kubectl
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube 
+
+sudo snap install kubectl --classic
+minikube start --driver=docker
+
+
+
+
+
+
+
+
