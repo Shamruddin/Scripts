@@ -151,7 +151,9 @@ sudo install minikube-linux-amd64 /usr/local/bin/minikube
 sudo snap install kubectl --classic
 minikube start --driver=docker
 
-
+-------calculator app for nginx--------
+https://github.com/sumanprasad007/cicd-on-kubernetes.git
+kubectl port-forward svc/my-service 30007:80 --address 0.0.0.0 &
 
 
 
