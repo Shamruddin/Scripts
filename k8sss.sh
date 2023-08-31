@@ -155,6 +155,10 @@ minikube start --driver=docker
 https://github.com/sumanprasad007/cicd-on-kubernetes.git
 kubectl port-forward svc/my-service 30007:80 --address 0.0.0.0 &
 
+------user profile app ----------------------------
+https://gitlab.com/nanuchi/k8s-in-1-hour.git
+ kubectl port-forward --address 0.0.0.0 svc/webapp-service 3000:3000 &
+
 
 
 
