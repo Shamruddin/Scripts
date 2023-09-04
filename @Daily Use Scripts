@@ -1,0 +1,393 @@
+##################----INSTALL TOMCAT----##################
+cd /opt
+sudo wget https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+sudo tar -xvf apache-tomcat-9.0.65.tar.gz
+
+cd /opt/apache-tomcat-9.0.65/conf
+sudo vi tomcat-users.xml
+# ---add-below-line at the end (2nd-last line)----
+# <user username="admin" password="admin1234" roles="admin-gui, manager-gui"/>
+
+sudo ln -s /opt/apache-tomcat-9.0.65/bin/startup.sh /usr/bin/startTomcat
+sudo ln -s /opt/apache-tomcat-9.0.65/bin/shutdown.sh /usr/bin/stopTomcat
+
+sudo vi /opt/apache-tomcat-9.0.65/webapps/manager/META-INF/context.xml
+
+comment:
+<!-- Valve className="org.apache.catalina.valves.RemoteAddrValve"
+  allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> -->
+
+sudo vi /opt/apache-tomcat-9.0.65/webapps/host-manager/META-INF/context.xml
+
+comment:
+<!-- Valve className="org.apache.catalina.valves.RemoteAddrValve"
+  allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" /> -->
+
+sudo stopTomcat
+sudo startTomcat
+
+sudo cp target/*.war /opt/apache-tomcat-9.0.65/webapps/
+
+-----------------for azure devops agent-----------------
+sudo  cp /home/ubuntu/myagent/_work/5/s/target/petclinic.war /opt/apache-tomcat-9.0.65/webapps/
+
+------------------------------------------------------------------------------------------------
+Running JPetStore sample under Tomcat (using the cargo-maven2-plugin).
+
+Clone this repository
+
+$ git clone https://github.com/mybatis/jpetstore-6.git
+Build war file
+
+$ cd jpetstore-6
+$ ./mvnw clean package
+Startup the Tomcat server and deploy web application
+
+$ ./mvnw cargo:run -P tomcat90
+Note:
+
+We provide maven profiles per application server as follow:
+
+Profile	Description
+tomcat90	Running under the Tomcat 9.0
+Run application in browser http://localhost:8080/jpetstore/
+
+Press Ctrl-C to stop the server.
+
+Run on Docker
+docker build . -t jpetstore
+docker run -p 8080:8080 jpetstore
+or with Docker Compose:
+
+docker compose up -d
+Try integration tests
+Perform integration tests for screen transition.
+
+$ ./mvnw clean verify -P tomcat90
+
+
+
+
+#############################-----STEPS-----###########################
+
+
+--- JDK & Maven Installation ---
+
+sudo apt-get update -y
+sudo apt install openjdk-11-jre -y
+sudo apt-get install maven -y
+
+--- Docker Installation ---
+
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg
+
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  
+  sudo apt-get update
+  
+  sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  
+service docker restart
+sudo usermod -aG docker $USER
+newgrp docker
+sudo chmod 666 /var/run/docker.sock
+sudo systemctl restart docker
+docker exec -it <container_id> /bin/bash
+docker container stop <container_id>
+======================================================================================================================================
+
+--- INSTALL JENKINS ---
+
+sudo apt install openjdk-11-jre
+
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt-get update -y 
+sudo apt-get install jenkins -y
+
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
+
+
+pipeline {
+    agent any
+    tools{
+        jdk  'jdk11'
+        maven  'maven3' 
+    }
+
+    stages {
+        stage('Git CheckOut') {
+            steps {
+                git branch: 'main', url: 'https://github.com/jaiswaladi246/GitOps-CI.git'
+            }
+        }
+        stage('Maven Build') {
+            steps {
+                sh 'mvn clean package -DskipTests=true'
+            }
+        }
+        stage('Docker Build & Push') {
+            steps {
+                script{
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                        
+                        sh "docker build -t shopping-cart -f docker/Dockerfile ."
+                        sh "docker tag  shopping-cart adijaiswal/shopping-cart:latest"
+                        sh "docker push adijaiswal/shopping-cart:latest"
+                    }
+                }
+            }
+        }
+        
+    }
+}
+
+
+
+---TRIVY INSTALLATION STEPS---
+
+sudo apt-get install wget apt-transport-https gnupg lsb-release
+
+wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+
+echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+
+sudo apt-get update
+
+sudo apt-get install trivy -y
+
+
+---COMMANDS---
+
+trivy image imagename
+
+trivy fs --security-checks vuln,config   Folder_name_OR_Path
+
+trivy image --severity HIGH,CRITICAL image_name
+
+trivy image -f json -o results.json image_name
+
+trivy repo repo-url
+
+trivy k8s --report summary cluster
+
+
+# -------------------------------------------K8-----------------------------------------------------------
+
+# Step1:
+
+Master and slave 
+
+apt-get update -y
+
+apt-get install docker.io -y
+
+service docker restart  
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -  
+
+echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" >/etc/apt/sources.list.d/kubernetes.list
+
+apt-get update
+
+apt install kubeadm=1.20.0-00 kubectl=1.20.0-00 kubelet=1.20.0-00 -y  
+
+# Step2:
+
+Master node:
+
+   kubeadm init --pod-network-cidr=192.168.0.0/16
+   
+   *If above one fails then run below command
+   
+   kubeadm token create --print-join-command
+  
+   
+   
+# Step3: 
+
+Master node: 
+
+mkdir -p $HOME/.kube
+
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+   
+# step4:
+
+Master node:
+
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.1/manifests/calico.yaml 
+
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.49.0/deploy/static/provider/baremetal/deploy.yaml
+
+
+ kubectl create deployment nginx --image=nginx
+   41  kubectl get deployments
+   42  kubectl describe deployment nginx
+   43  kubectl create service nodeport nginx --tcp=80:80
+   44  kubectl get svc
+   45  curl master-node:30386
+   46  curl ip-172-31-0-145:30080
+   47  curl ip-172-31-0-145:32409
+   48  kubectl get svc
+   49  ip a
+
+#############################################################################################################################################
+   # Steps:-
+
+# For Docker Installation
+sudo apt-get update
+sudo apt-get install docker.io -y
+sudo usermod -aG docker $USER && newgrp docker
+
+# For Minikube & Kubectl
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube 
+
+sudo snap install kubectl --classic
+minikube start --driver=docker
+
+git clone https://github.com/LondheShubham153/reddit-clone-k8s-ingress.git
+kubectl apply -f Deployment.yml
+kubectl apply -f Service.yml
+kubectl get deployment & kubectl get services
+kubectl expose deployment reddit-clone-deployment --type=NodePort
+kubectl port-forward svc/reddit-clone-service 3000:3000 --address 0.0.0.0 &
+kubectl exec -it <pod-name> -- <command>
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+------simple ci/cd --------
+1.git clone https://github.com/jaiswaladi246/Devops-CICD.git
+
+
+############################################################ Repositories ######################################################################################
+1.git clone https://github.com/spring-petclinic/spring-framework-petclinic.git
+cd spring-framework-petclinic
+./mvnw jetty:run-war
+# For Windows : ./mvnw.cmd jetty:run-war
+# For MySQL: ./mvnw jetty:run-war -P MySQL
+
+docker run -p 8080:8080 springcommunity/spring-framework-petclinic
+
+
+2. git clone https://github.com/jaiswaladi246/Shopping-Cart.git
+  Go to the root folder of the application and type:
+
+$ chmod +x scripts/mvnw
+$ scripts/mvnw spring-boot:run
+Using Executable Jar
+Or you can build the JAR file with
+
+$ scripts/mvnw clean package
+Then you can run the JAR file:
+
+$ java -jar target/shopping-cart-0.0.1-SNAPSHOT.jar
+Maven
+Open a terminal and run the following commands to ensure that you have valid versions of Java and Maven installed:
+
+$ java -version
+java version "1.8.0_102"
+Java(TM) SE Runtime Environment (build 1.8.0_102-b14)
+Java HotSpot(TM) 64-Bit Server VM (build 25.102-b14, mixed mode)
+$ mvn -v
+Apache Maven 3.3.9 (bb52d8502b132ec0a5a3f4c09453c07478323dc5; 2015-11-10T16:41:47+00:00)
+Maven home: /usr/local/Cellar/maven/3.3.9/libexec
+Java version: 1.8.0_102, vendor: Oracle Corporation
+Using the Maven Plugin
+The Spring Boot Maven plugin includes a run goal that can be used to quickly compile and run your application. Applications run in an exploded form, as they do in your IDE. The following example shows a typical Maven command to run a Spring Boot application:
+
+$ mvn spring-boot:run
+Using Executable Jar
+To create an executable jar run:
+
+$ mvn clean package
+To run that application, use the java -jar command, as follows:
+
+$ java -jar target/shopping-cart-0.0.1-SNAPSHOT.jar
+To exit the application, press ctrl-c.
+
+Docker
+It is possible to run shopping-cart using Docker:
+
+Build Docker image:
+
+$ mvn clean package
+$ docker build -t shopping-cart:dev -f docker/Dockerfile .
+Run Docker container:
+
+$ docker run --rm -i -p 8070:8070 \
+      --name shopping-cart \
+      shopping-cart:dev
+Helper script
+It is possible to run all of the above with helper script:
+
+$ chmod +x scripts/run_docker.sh
+$ scripts/run_docker.sh
+Docker
+Folder docker contains:
+
+docker/shopping-cart/Dockerfile - Docker build file for executing shopping-cart Docker image. Instructions to build artifacts, copy build artifacts to docker image and then run app on proper port with proper configuration file.
+Util Scripts
+scripts/run_docker.sh.sh - util script for running shopping-cart Docker container using docker/Dockerfile
+Tests
+Tests can be run by executing following command from the root of the project:
+
+$ mvn test
+Helper Tools
+HAL REST Browser
+Go to the web browser and visit http://localhost:8070/
+
+You will need to be authenticated to be able to see this page.
+
+H2 Database web interface
+Go to the web browser and visit http://localhost:8070/h2-console
+
+In field JDBC URL put
+
+jdbc:h2:mem:shopping_cart_db
+In /src/main/resources/application.properties file it is possible to change both web interface url path, as well as the datasource url.
+
+
+1. git clone https://github.com/jaiswaladi246/Devops-CICD.git
+2. git clone https://github.com/jaiswaladi246/Shopping-Cart.git
+3. git clone https://github.com/jaiswaladi246/NodeJS_WebApp_Public.git
+4. git clone https://github.com/jaiswaladi246/to-do-app.git
+5. git clone https://github.com/jaiswaladi246/secretsanta-generator.git
+6. git clone https://github.com/jaiswaladi246/jpetstore-6.git
+7. git clone https://github.com/jaiswaladi246/docker-spring-boot-java-web-service-example.git
+8. git clone https://github.com/LondheShubham153/reddit-clone-k8s-ingress.git
+9. git clone https://github.com/Shamruddin/30-Days-Of-DevOps.git
+10.git clone https://github.com/Shamruddin/cloud-native-monitoring-app.git
+
+
+
+
+
+
+
+
+
+
+
+
+
