@@ -153,6 +153,9 @@ sudo install minikube-linux-amd64 /usr/local/bin/minikube
 sudo snap install kubectl --classic
 minikube start --driver=docker
 
+git clone https://github.com/LondheShubham153/reddit-clone-k8s-ingress.git
+kubectl port-forward svc/reddit-clone-service 3000:3000 --address 0.0.0.0 &
+
 
 
 
