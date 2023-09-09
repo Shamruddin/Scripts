@@ -57,6 +57,7 @@ kubectl get nodes
 1. Launch an instance from an Amazon Linux 2 or Amazon Linux AMI.
 2. Connect to your instance.
 3. Update the packages and package caches you have installed on your instance.
+git clone https://github.com/DEVOPS-WITH-WEB-DEV/springboot-k8s.git
 `
 yum update -y
 
