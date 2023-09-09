@@ -129,6 +129,7 @@ for example, if my service is named badstore and is listening on 80
 kubectl port-forward --address 0.0.0.0 svc/badstore 8888:80
 
 ------flask-app ----------
+git clone https://github.com/Shamruddin/cloud-native-monitoring-app.git
 kubectl port-forward --address 0.0.0.0 svc/flask-app-service 5000:80 &
 
 
